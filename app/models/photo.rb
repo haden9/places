@@ -18,6 +18,11 @@ class Photo
       delete_one
   end
 
+  def find_nearest_place_id(max_meters)
+    document = Place.near(self.location, max_meters).limit(1).projection('_id' => 1).first
+    document['_id']
+  end
+
   def contents
     file = self.class.collection.find_one('_id' => BSON::ObjectId.from_string(@id))
     if file
