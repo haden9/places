@@ -28,6 +28,15 @@ class Place
     end
   end
 
+  def self.get_country_names
+    collection.find.aggregate([{'$unwind' => '$address_components'},
+      {'$match' => {'address_components.types' => 'country'}},
+      {'$project' => {'_id' => 1, 'address_components.long_name' => 1,
+        'address_components.types' => 1}},
+      {'$group' => {'_id' => '$address_components.long_name'}}
+    ]).to_a.to_a.map {|h| h[:_id]}
+  end
+
   def destroy
     self.class.collection.delete_one(:_id => BSON::ObjectId.from_string(@id))
   end
