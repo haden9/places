@@ -12,6 +12,10 @@ class Place
     end
   end
 
+  def self.find_by_short_name(short_name)
+    collection.find({'address_components.short_name' => short_name})
+  end
+
   def self.load_all(json_file)
     json_hash = JSON.parse(json_file.read)
     collection.insert_many(json_hash)
