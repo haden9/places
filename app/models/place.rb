@@ -12,6 +12,10 @@ class Place
     end
   end
 
+  def destroy
+    self.class.collection.delete_one(:_id => BSON::ObjectId.from_string(@id))
+  end
+
   def self.all(offset=0,limit=nil)
     collection_view = []
     if limit.nil?
@@ -42,6 +46,16 @@ class Place
   def self.load_all(json_file)
     json_hash = JSON.parse(json_file.read)
     collection.insert_many(json_hash)
+  end
+
+  def self.reset
+    file_path = './db/places.json'
+    if File.exists?(file_path)
+      all.each {|place| place.destroy}
+      load_all(File.open(file_path))
+    else
+      puts 'places.json file not found'
+    end
   end
 
   def self.mongo_client
