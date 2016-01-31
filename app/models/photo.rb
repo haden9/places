@@ -26,6 +26,11 @@ class Photo
     document['_id']
   end
 
+  def self.find_photos_for_place(id)
+    bson_id = id.is_a?(String) ? BSON::ObjectId.from_string(id) : id
+    collection.find('metadata.place' => bson_id)
+  end
+
   def contents
     file = self.class.collection.find_one('_id' => BSON::ObjectId.from_string(@id))
     if file
@@ -66,9 +71,10 @@ class Photo
     description[:metadata][:location] = {}
     description[:metadata][:place] = {}
     if persisted?
+      place_bson_id = @place.is_a?(BSON::ObjectId) ? @place : BSON::ObjectId.from_string(@place.id)
       self.class.collection.find('_id' => BSON::ObjectId.from_string(@id)).
         update_one('metadata' => {'location' => @location.to_hash,
-          'place' => @place})
+          'place' => place_bson_id})
     else
       if @contents
         gps = EXIFR::JPEG.new(@contents).gps
