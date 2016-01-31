@@ -57,12 +57,15 @@ class Photo
   end
 
   def save
-    unless persisted?
+    description = {}
+    description[:content_type] = {}
+    description[:metadata] = {}
+    description[:metadata][:location] = {}
+    if persisted?
+      self.class.collection.find('_id' => BSON::ObjectId.from_string(@id)).
+        update_one('metadata' => {'location' => @location.to_hash})
+    else
       if @contents
-        description = {}
-        description[:content_type] = {}
-        description[:metadata] = {}
-        description[:metadata][:location] = {}
         gps = EXIFR::JPEG.new(@contents).gps
         @location = Point.new({lng: gps.longitude, lat: gps.latitude})
         description[:content_type] = 'image/jpeg'
@@ -73,6 +76,7 @@ class Photo
         @id = id.to_s
       end
     end
+    @id
   end
 
   def self.mongo_client
