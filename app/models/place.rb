@@ -12,16 +12,31 @@ class Place
     end
   end
 
+  def self.get_address_components(sort={'_id'=>1},offset=0,limit=nil)
+    if limit
+      collection.find.aggregate([{'$sort' => sort}, {'$skip' => offset}, {'$limit' => limit},
+        {'$project' => {'_id' => 1, 'address_components' => 1, 'formatted_address' => 1,
+                           'geometry.geolocation' => 1}}
+      ])
+    else
+      collection.find.aggregate([{'$sort' => sort}, {'$skip' => offset},
+        {'$unwind' => '$address_components'},
+        {'$project' => {'_id' => 1, 'address_components' => 1, 'formatted_address' => 1,
+                           'geometry.geolocation' => 1}}
+      ])
+    end
+  end
+
   def destroy
     self.class.collection.delete_one(:_id => BSON::ObjectId.from_string(@id))
   end
 
   def self.all(offset=0,limit=nil)
     collection_view = []
-    if limit.nil?
-      collection_view = collection.find.skip(offset)
-    else
+    if limit
       collection_view = collection.find.skip(offset).limit(limit)
+    else
+      collection_view = collection.find.skip(offset)
     end
     to_places(collection_view)
   end
