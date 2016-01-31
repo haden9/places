@@ -14,12 +14,12 @@ class Photo
   end
 
   def destroy
-    self.class.mongo_client.database.fs.find('_id' => BSON::ObjectId.from_string(@id)).
+    self.class.collection.find('_id' => BSON::ObjectId.from_string(@id)).
       delete_one
   end
 
   def contents
-    file = self.class.mongo_client.database.fs.find_one('_id' => BSON::ObjectId.from_string(@id))
+    file = self.class.collection.find_one('_id' => BSON::ObjectId.from_string(@id))
     if file
       buffer = ''
       file.chunks.reduce([]) do |key, chunk|
@@ -34,12 +34,12 @@ class Photo
   end
 
   def self.all(offset=0,limit=0)
-    collection_view = mongo_client.database.fs.find.skip(offset).limit(limit)
+    collection_view = collection.find.skip(offset).limit(limit)
     to_photos(collection_view)
   end
 
   def self.find(id)
-    document = mongo_client.database.fs.find('_id' => BSON::ObjectId.from_string(id)).first
+    document = collection.find('_id' => BSON::ObjectId.from_string(id)).first
     return document.nil? ? nil : Photo.new(document)
   end
 
@@ -64,7 +64,7 @@ class Photo
         description[:metadata][:location] = @location.to_hash
         @contents.rewind # need to remove the reference so that the contents method works
         grid_file = Mongo::Grid::File.new(@contents.read, description)
-        id = self.class.mongo_client.database.fs.insert_one(grid_file)
+        id = self.class.collection.insert_one(grid_file)
         @id = id.to_s
       end
     end
@@ -75,6 +75,6 @@ class Photo
   end
 
   def self.collection
-    mongo_client[:places_development]
+    mongo_client.database.fs
   end
 end
