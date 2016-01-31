@@ -13,6 +13,11 @@ class Photo
     @location = Point.new(params[:metadata][:location]) if params[:metadata].present?
   end
 
+  def destroy
+    self.class.mongo_client.database.fs.find('_id' => BSON::ObjectId.from_string(@id)).
+      delete_one
+  end
+
   def contents
     file = self.class.mongo_client.database.fs.find_one('_id' => BSON::ObjectId.from_string(@id))
     if file
