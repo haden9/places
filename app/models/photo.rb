@@ -1,4 +1,8 @@
 class Photo
+  attr_accessor :id, :location, :contents
+
+  def initialize
+  end
 
   def self.mongo_client
     Mongoid::Clients.default
