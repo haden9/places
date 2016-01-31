@@ -1,6 +1,6 @@
 class Place
-
   attr_accessor :id, :formatted_address, :location, :address_components
+  include ActiveModel::Model
 
   def initialize(params={})
     @id = params[:id].present? ? params[:id] : params[:_id].to_s
@@ -12,6 +12,10 @@ class Place
         @address_components << AddressComponent.new(address_component)
       end
     end
+  end
+
+  def persisted?
+    !@id.nil?
   end
 
   def self.get_address_components(sort={'_id'=>1},offset=0,limit=nil)
@@ -56,7 +60,9 @@ class Place
   end
 
   def photos(offset=0,limit=0)
-    Photo.all(offset, limit)
+    collection_view = Photo.collection.
+      find('metadata.place' => BSON::ObjectId.from_string(self.id)).skip(offset).limit(limit)
+    Photo.to_photos(collection_view)
   end
 
   def self.find(id)
