@@ -12,6 +12,16 @@ class Place
     end
   end
 
+  def self.all(offset=0,limit=nil)
+    collection_view = []
+    if limit.nil?
+      collection_view = collection.find.skip(offset)
+    else
+      collection_view = collection.find.skip(offset).limit(limit)
+    end
+    to_places(collection_view)
+  end
+
   def self.find(id)
     document = collection.find(:_id => BSON::ObjectId.from_string(id)).first
     return document.nil? ? nil : Place.new(document)
