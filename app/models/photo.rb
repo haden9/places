@@ -13,6 +13,17 @@ class Photo
     @location = Point.new(params[:metadata][:location]) if params[:metadata].present?
   end
 
+  def contents
+    file = self.class.mongo_client.database.fs.find_one('_id' => BSON::ObjectId.from_string(@id))
+    if file
+      buffer = ''
+      file.chunks.reduce([]) do |key, chunk|
+        buffer << chunk.data.data
+      end
+      return buffer
+    end
+  end
+
   def persisted?
     !@id.nil?
   end
@@ -46,6 +57,7 @@ class Photo
         @location = Point.new({lng: gps.longitude, lat: gps.latitude})
         description[:content_type] = 'image/jpeg'
         description[:metadata][:location] = @location.to_hash
+        @contents.rewind # need to remove the reference so that the contents method works
         grid_file = Mongo::Grid::File.new(@contents.read, description)
         id = self.class.mongo_client.database.fs.insert_one(grid_file)
         @id = id.to_s
