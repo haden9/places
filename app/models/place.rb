@@ -3,7 +3,7 @@ class Place
   attr_accessor :id, :formatted_address, :location, :address_components
 
   def initialize(params={})
-    @id = params[:_id].to_s
+    @id = params[:id].present? ? params[:id] : params[:_id].to_s
     @formatted_address = params[:formatted_address]
     @location = Point.new(params[:geometry][:location]) if params[:geometry].present?
     @address_components = []
@@ -12,16 +12,21 @@ class Place
     end
   end
 
+  def self.find(id)
+    document = collection.find(:_id => BSON::ObjectId.from_string(id)).first
+    return document.nil? ? nil : Place.new(document)
+  end
+
   def self.find_by_short_name(short_name)
     collection.find({'address_components.short_name' => short_name})
   end
 
   def self.to_places(collection_view)
     places = []
-    collection_view.each do |view|
-      places << Place.new(view)
+    collection_view.each do |document|
+      places << Place.new(document)
     end
-    return places
+    places
   end
 
   def self.load_all(json_file)
