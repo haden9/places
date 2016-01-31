@@ -1,5 +1,5 @@
 class Photo
-  attr_accessor :id, :location
+  attr_accessor :id, :location, :place
   attr_writer :contents
 
   include ActiveModel::Model
@@ -10,7 +10,10 @@ class Photo
     else
       @id = params[:id] if params[:id].present?
     end
-    @location = Point.new(params[:metadata][:location]) if params[:metadata].present?
+    if params[:metadata]
+      @location = Point.new(params[:metadata][:location]) if params[:metadata][:location].present?
+      @place = Place.find(params[:metadata][:place]) if params[:metadata][:place].present?
+    end
   end
 
   def destroy
@@ -61,15 +64,18 @@ class Photo
     description[:content_type] = {}
     description[:metadata] = {}
     description[:metadata][:location] = {}
+    description[:metadata][:place] = {}
     if persisted?
       self.class.collection.find('_id' => BSON::ObjectId.from_string(@id)).
-        update_one('metadata' => {'location' => @location.to_hash})
+        update_one('metadata' => {'location' => @location.to_hash,
+          'place' => @place})
     else
       if @contents
         gps = EXIFR::JPEG.new(@contents).gps
         @location = Point.new({lng: gps.longitude, lat: gps.latitude})
         description[:content_type] = 'image/jpeg'
         description[:metadata][:location] = @location.to_hash
+        description[:metadata][:place] = @place.nil? ? {} : BSON::ObjectId.from_string(@place.id)
         @contents.rewind # need to remove the reference so that the contents method works
         grid_file = Mongo::Grid::File.new(@contents.read, description)
         id = self.class.collection.insert_one(grid_file)
