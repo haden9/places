@@ -34,7 +34,14 @@ class Place
       {'$project' => {'_id' => 1, 'address_components.long_name' => 1,
         'address_components.types' => 1}},
       {'$group' => {'_id' => '$address_components.long_name'}}
-    ]).to_a.to_a.map {|h| h[:_id]}
+    ]).to_a.to_a.map {|document| document[:_id]}
+  end
+
+  def self.find_ids_by_country_code(country_code)
+    collection.find.aggregate([{'$match' => {'address_components.short_name' => country_code,
+        'address_components.types' => 'country'}},
+      {'$project' => {'_id' => 1}}
+    ]).map {|document| document[:_id].to_s}
   end
 
   def destroy
