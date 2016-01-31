@@ -22,6 +22,11 @@ class Photo
     to_photos(collection_view)
   end
 
+  def self.find(id)
+    document = mongo_client.database.fs.find('_id' => BSON::ObjectId.from_string(id)).first
+    return document.nil? ? nil : Photo.new(document)
+  end
+
   def self.to_photos(collection_view)
     photos = []
     collection_view.each do |document|
