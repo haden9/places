@@ -75,6 +75,14 @@ class Place
     places
   end
 
+  def self.create_indexes
+    collection.indexes.create_one({'geometry.geolocation' => '2dsphere'})
+  end
+
+  def self.remove_indexes
+    collection.indexes.drop_one('geometry.geolocation_2dsphere')
+  end
+
   def self.load_all(json_file)
     json_hash = JSON.parse(json_file.read)
     collection.insert_many(json_hash)
