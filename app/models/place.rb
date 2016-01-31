@@ -50,13 +50,8 @@ class Place
     self.class.collection.delete_one(:_id => BSON::ObjectId.from_string(@id))
   end
 
-  def self.all(offset=0,limit=nil)
-    collection_view = []
-    if limit
-      collection_view = collection.find.skip(offset).limit(limit)
-    else
-      collection_view = collection.find.skip(offset)
-    end
+  def self.all(offset=0,limit=0)
+    collection_view = collection.find.skip(offset).limit(limit)
     to_places(collection_view)
   end
 
@@ -85,17 +80,13 @@ class Place
     collection.indexes.drop_one('geometry.geolocation_2dsphere')
   end
 
-  def self.near(point, max_meters=nil)
-    if max_meters
-      collection.find({'geometry.geolocation' => {'$near' => { '$geometry' => point.to_hash,
-        '$maxDistance' => max_meters}}}
-      )
-    else
-      collection.find({'geometry.geolocation' => {'$near' => { '$geometry' => point.to_hash}}})
-    end
+  def self.near(point, max_meters=0)
+    collection.find({'geometry.geolocation' => {'$near' => { '$geometry' => point.to_hash,
+      '$maxDistance' => max_meters}}}
+    )
   end
 
-  def near(max_meters=nil)
+  def near(max_meters=0)
     collection_view = self.class.near(@location, max_meters).to_a
     self.class.to_places(collection_view)
   end
