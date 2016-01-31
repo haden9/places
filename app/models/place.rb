@@ -14,15 +14,16 @@ class Place
 
   def self.get_address_components(sort={'_id'=>1},offset=0,limit=nil)
     if limit
-      collection.find.aggregate([{'$sort' => sort}, {'$skip' => offset}, {'$limit' => limit},
+      collection.find.aggregate([{'$unwind' => '$address_components'},
         {'$project' => {'_id' => 1, 'address_components' => 1, 'formatted_address' => 1,
-                           'geometry.geolocation' => 1}}
+                           'geometry.geolocation' => 1}},
+        {'$sort' => sort}, {'$skip' => offset}, {'$limit' => limit},
       ])
     else
-      collection.find.aggregate([{'$sort' => sort}, {'$skip' => offset},
-        {'$unwind' => '$address_components'},
+      collection.find.aggregate([{'$unwind' => '$address_components'},
         {'$project' => {'_id' => 1, 'address_components' => 1, 'formatted_address' => 1,
-                           'geometry.geolocation' => 1}}
+                           'geometry.geolocation' => 1}},
+        {'$sort' => sort}, {'$skip' => offset}
       ])
     end
   end
