@@ -6,15 +6,28 @@ class Photo
 
   def initialize(params={})
     if params[:_id]
-      @id = params[:_id].to_s
+      @id = params[:_id].to_s if params[:_id].present?
     else
-      @id = params[:id]
+      @id = params[:id] if params[:id].present?
     end
     @location = Point.new(params[:metadata][:location]) if params[:metadata].present?
   end
 
   def persisted?
     !@id.nil?
+  end
+
+  def self.all(offset=0,limit=0)
+    collection_view = mongo_client.database.fs.find.skip(offset).limit(limit)
+    to_photos(collection_view)
+  end
+
+  def self.to_photos(collection_view)
+    photos = []
+    collection_view.each do |document|
+      photos << Photo.new(document)
+    end
+    photos
   end
 
   def save
