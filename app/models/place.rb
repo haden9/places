@@ -83,6 +83,12 @@ class Place
     collection.indexes.drop_one('geometry.geolocation_2dsphere')
   end
 
+  def self.near(point, max_meters=nil)
+    collection.find({'geometry.geolocation' => {'$near' => { '$geometry' => point.to_hash,
+      '$maxDistance' => max_meters}}}
+    )
+  end
+
   def self.load_all(json_file)
     json_hash = JSON.parse(json_file.read)
     collection.insert_many(json_hash)
