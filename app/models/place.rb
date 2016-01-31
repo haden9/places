@@ -5,10 +5,12 @@ class Place
   def initialize(params={})
     @id = params[:id].present? ? params[:id] : params[:_id].to_s
     @formatted_address = params[:formatted_address]
-    @location = Point.new(params[:geometry][:location]) if params[:geometry].present?
+    @location = Point.new(params[:geometry][:geolocation]) if params[:geometry].present?
     @address_components = []
-    params[:address_components].each do |address_component|
-      @address_components << AddressComponent.new(address_component)
+    if params[:address_components].present?
+      params[:address_components].each do |address_component|
+        @address_components << AddressComponent.new(address_component)
+      end
     end
   end
 
@@ -84,9 +86,18 @@ class Place
   end
 
   def self.near(point, max_meters=nil)
-    collection.find({'geometry.geolocation' => {'$near' => { '$geometry' => point.to_hash,
-      '$maxDistance' => max_meters}}}
-    )
+    if max_meters
+      collection.find({'geometry.geolocation' => {'$near' => { '$geometry' => point.to_hash,
+        '$maxDistance' => max_meters}}}
+      )
+    else
+      collection.find({'geometry.geolocation' => {'$near' => { '$geometry' => point.to_hash}}})
+    end
+  end
+
+  def near(max_meters=nil)
+    collection_view = self.class.near(@location, max_meters).to_a
+    self.class.to_places(collection_view)
   end
 
   def self.load_all(json_file)
