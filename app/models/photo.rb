@@ -71,7 +71,14 @@ class Photo
     description[:metadata][:location] = {}
     description[:metadata][:place] = {}
     if persisted?
-      place_bson_id = @place.is_a?(BSON::ObjectId) ? @place : BSON::ObjectId.from_string(@place.id)
+      place_bson_id = ''
+      if @place
+        if @place.is_a?(BSON::ObjectId)
+          place_bson_id = @place
+        else
+          place_bson_id = BSON::ObjectId.from_string(@place.id)
+        end
+      end
       self.class.collection.find('_id' => BSON::ObjectId.from_string(@id)).
         update_one('metadata' => {'location' => @location.to_hash,
           'place' => place_bson_id})

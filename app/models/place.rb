@@ -55,6 +55,10 @@ class Place
     to_places(collection_view)
   end
 
+  def photos(offset=0,limit=0)
+    Photo.all(offset, limit)
+  end
+
   def self.find(id)
     document = collection.find(:_id => BSON::ObjectId.from_string(id)).first
     return document.nil? ? nil : Place.new(document)
